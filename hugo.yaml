@@ -1,0 +1,15 @@
+baseURL: https://translate.rlysleepyni.click/
+locale: ja
+title: rlysleepy-translate
+theme: PaperMod
+security:
+  allowContent:
+    - 'text/html'
+
+params:
+  cover:
+    hidden: false
+    hiddenInList: false
+    hiddenInSingle: false
+    responsiveImages: false
+    linkFullImages: true

@@ -1,0 +1,18 @@
+# ビルド出力（GitHub Actionsで動的生成するため）
+/public/
+
+# Hugoの自動生成キャッシュ
+/resources/_gen/
+.hugo_build.lock
+
+# OS・環境固有ファイル
+.DS_Store
+Thumbs.db
+
+# エディタ設定
+.vscode/
+.idea/
+
+# ローカル環境変数
+.env
+*.local

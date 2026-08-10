@@ -1,0 +1,74 @@
+{{ $apiKey := getenv "HUGO_MICROCMS_KEY" }}
+{{ $limit := 100 }}
+{{ $endpoint := "https://rlysleepy-translate.microcms.io/api/v1/articles" }}
+{{ $opts := dict
+  "headers" (dict "X-MICROCMS-API-KEY" $apiKey)
+}}
+{{ $dataList := slice }}
+
+{{/* データ取得（キャッシュ回避用タイムスタンプ付き） */}}
+{{ range seq 0 1999 }}
+  {{ $offset := math.Mul $limit . }}
+  {{ $data := dict }}
+  {{ $url := print $endpoint "?orders=createdAt&limit=" $limit "&offset=" $offset "&t=" now.Unix }}
+  
+  {{ with resources.GetRemote $url $opts }}
+    {{ $data = . | transform.Unmarshal }}
+    {{ $dataList = $dataList | append $data }}
+  {{ else }}
+    {{ errorf "microCMSからのデータ取得に失敗しました: %s" $url }}
+  {{ end }}
+
+  {{ if lt (len $data.contents) $limit }}
+    {{ break }}
+  {{ end }}
+{{ end }}
+
+{{/* ページ生成処理 */}}
+{{ range $dataList }}
+  {{ range .contents }}
+    {{ $articlePath := .id }}
+    {{ $title := .title }}
+    {{ $rawContent := .content }}
+    {{ $processedContent := $rawContent | replaceRE "<a([^>]*?)>" "<a class=\"link\"$1>" }}
+    {{ $content := dict "mediaType" "text/html" "value" $processedContent }}
+    {{ $dates := dict "date" (time.AsTime .publishedAt) "lastmod" (time.AsTime .revisedAt) }}
+    
+    {{ $tags := slice }}
+    {{ range .tags }}
+      {{ $tags = $tags | append .name }}
+    {{ end }}
+
+    {{/* カバー画像オブジェクトの生成 */}}
+    {{ $cover := dict }}
+    {{ with .coverImage }}
+      {{ if .url }}
+        {{ $cover = dict 
+          "image" .url 
+          "alt" $title 
+          "relative" false
+          "hidden" false
+        }}
+      {{ end }}
+    {{ end }}
+
+    {{ $params := dict 
+      "id" .id 
+      "title" .title 
+      "tags" $tags
+      "cover" $cover
+      "toc" true
+    }}
+
+    {{ $page := dict
+      "content" $content
+      "dates" $dates
+      "kind" "page"
+      "params" $params
+      "path" $articlePath
+      "title" $title
+    }}
+
+    {{ $.AddPage $page }}
+  {{ end }}
+{{ end }}
