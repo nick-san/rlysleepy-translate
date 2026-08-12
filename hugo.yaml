@@ -13,3 +13,6 @@ params:
     hiddenInSingle: false
     responsiveImages: false
     linkFullImages: true
+  env: production
+  images:
+    - /images/default-ogp.png
